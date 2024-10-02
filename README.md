@@ -1,1 +1,1 @@
-# FXT000
+# FX-tradingschool
