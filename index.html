@@ -1,641 +1,175 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FXトレード塾＠マルチチャート</title>
-	<!-- Font AwesomeのCDNを追加 -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <style>
-            h1 {
-            font-size: 20px;
-            color: #483d8b;
-            text-align: center;
-            margin-top: 10px;
-	　　font-family: Arial, sans-serif;
-        }
-        .pair-container {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .tradingview-widget-container {
-            width: 32%;
-            height: 200px; /* チャートの高さ */
-        }
-        .chart-label {
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 1px;
-	    font-size: 10px; /* フォントサイズを指定 */
-	    color: #4169e1; /* フォントの色を指定 */
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FXトレード塾：マルチタイムフレームチャート</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      overflow: hidden;
+    }
+    header {
+      background-color: #2e3b55;
+      color: white;
+      padding: 4px 6px;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 0.95em;
+      margin: 0;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      background-color: #fff;
+      border-bottom: 1px solid #ccc;
+    }
+    nav button {
+      background: none;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #4169e1;
+    }
+    nav button.active {
+      border-bottom: 2px solid #4169e1;
+    }
+    .tab-content {
+      display: none;
+      height: calc(100vh - 60px); /* header + nav = 約60px */
+      padding: 4px;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 2fr 3fr;
+      grid-template-rows: 1fr 1.4fr;
+      grid-template-areas:
+        "daily hourly"
+        "minute minute";
+      height: 100%;
+      gap: 4px;
+    }
+    .chart-container {
+      background-color: #fff;
+      border-radius: 6px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      padding: 2px;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-label {
+      font-size: 13px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 2px;
+      color: #4169e1;
+      flex: 0 0 auto;
+    }
+    .tradingview-widget-container {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .daily { grid-area: daily; }
+    .hourly { grid-area: hourly; }
+    .minute { grid-area: minute; }
+  </style>
 </head>
 <body>
-  <h1>FXトレード塾 <i class="fas fa-chart-line chart-icon"></i> マルチチャート</h1>
+  <header><h1>FXトレード塾：マルチタイムフレームチャート</h1></header>
+  <nav id="tab-buttons"></nav>
+  <div id="tabs"></div>
 
-    <div class="pair-container">
-        <div class="tradingview-widget-container">
-            <div class="chart-label">USD/JPY 1日</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:USDJPY",
-                    "interval": "D",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">USD/JPY 1時間</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:USDJPY",
-                    "interval": "60",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">USD/JPY 1分</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:USDJPY",
-                    "interval": "1",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-    </div>
- 
+  <script>
+    const pairs = [
+      { id: "USDJPY", name: "USD/JPY", symbol: "FX:USDJPY" },
+      { id: "EURJPY", name: "EUR/JPY", symbol: "FX:EURJPY" },
+      { id: "GBPJPY", name: "GBP/JPY", symbol: "FX:GBPJPY" },
+      { id: "EURUSD", name: "EUR/USD", symbol: "FX:EURUSD" },
+      { id: "AUDJPY", name: "AUD/JPY", symbol: "FX:AUDJPY" },
+      { id: "GBPUSD", name: "GBP/USD", symbol: "FX:GBPUSD" },
+      { id: "AUDUSD", name: "AUD/USD", symbol: "FX:AUDUSD" },
+      { id: "GOLD", name: "GOLD", symbol: "CAPITALCOM:GOLD" }
+    ];
 
-    <div class="pair-container">
-        <div class="tradingview-widget-container">
-            <div class="chart-label">EUR/JPY 1日</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:EURJPY",
-                    "interval": "D",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">EUR/JPY 1時間</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:EURJPY",
-                    "interval": "60",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">EUR/JPY 1分</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:EURJPY",
-                    "interval": "1",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-    </div>
+    const tabButtons = document.getElementById('tab-buttons');
+    const tabs = document.getElementById('tabs');
 
-    <div class="pair-container">
-        <div class="tradingview-widget-container">
-            <div class="chart-label">GBP/JPY 1日</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:GBPJPY",
-                    "interval": "D",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">GBP/JPY 1時間</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:GBPJPY",
-                    "interval": "60",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">GBP/JPY 1分</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:GBPJPY",
-                    "interval": "1",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-    </div>
+    pairs.forEach((pair, index) => {
+      const btn = document.createElement('button');
+      btn.textContent = pair.name;
+      btn.onclick = () => setActiveTab(pair.id);
+      if (index === 0) btn.classList.add('active');
+      tabButtons.appendChild(btn);
 
-    <div class="pair-container">
-        <div class="tradingview-widget-container">
-            <div class="chart-label">EUR/USD 1日</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:EURUSD",
-                    "interval": "D",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">EUR/USD 1時間</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:EURUSD",
-                    "interval": "60",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">EUR/USD 1分</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:EURUSD",
-                    "interval": "1",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-    </div>
+      const tab = document.createElement('div');
+      tab.className = 'tab-content' + (index === 0 ? ' active' : '');
+      tab.id = pair.id;
 
-    <div class="pair-container">
-        <div class="tradingview-widget-container">
-            <div class="chart-label">AUD/JPY 1日</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:AUDJPY",
-                    "interval": "D",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">AUD/JPY 1時間</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:AUDJPY",
-                    "interval": "60",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">AUD/JPY 1分</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:AUDJPY",
-                    "interval": "1",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-    </div>
+      const grid = document.createElement('div');
+      grid.className = 'chart-grid';
 
-    <div class="pair-container">
-        <div class="tradingview-widget-container">
-            <div class="chart-label">GOLD 1日</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "CAPITALCOM:GOLD",
-                    "interval": "D",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">GOLD 1時間</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "CAPITALCOM:GOLD",
-                    "interval": "60",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">GOLD 1分</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "CAPITALCOM:GOLD",
-                    "interval": "1",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-    </div>
+      const charts = [
+        { label: '1日足', interval: 'D', area: 'daily' },
+        { label: '1時間足', interval: '60', area: 'hourly' },
+        { label: '1分足', interval: '1', area: 'minute' }
+      ];
 
-    
+      charts.forEach(chart => {
+        const container = document.createElement('div');
+        container.className = `chart-container ${chart.area}`;
 
-    <div class="pair-container">
-        <div class="tradingview-widget-container">
-            <div class="chart-label">GBP/USD 1日</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:GBPUSD",
-                    "interval": "D",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">GBP/USD 1時間</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:GBPUSD",
-                    "interval": "60",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">GBP/USD 1分</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:GBPUSD",
-                    "interval": "1",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-    </div>
+        const label = document.createElement('div');
+        label.className = 'chart-label';
+        label.textContent = chart.label;
 
-    <div class="pair-container">
-        <div class="tradingview-widget-container">
-            <div class="chart-label">AUD/USD 1日</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:AUDUSD",
-                    "interval": "D",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">AUD/USD 1時間</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:AUDUSD",
-                    "interval": "60",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-        <div class="tradingview-widget-container">
-            <div class="chart-label">AUD/USD 1分</div>
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "autosize": true,
-                    "symbol": "FX:AUDUSD",
-                    "interval": "1",
-                    "timezone": "Etc/UTC",
-                    "theme": "light",
-                    "style": "1",
-                    "locale": "ja",
-                    "hide_top_toolbar": true,
-                    "hide_legend": true,
-                    "allow_symbol_change": false,
-                    "save_image": false,
-                    "calendar": false,
-                    "hide_volume": true,
-                    "support_host": "https://www.tradingview.com"
-                }
-                </script>
-            </div>
-        </div>
-    </div>
-</div>
+        const widget = document.createElement('div');
+        widget.className = 'tradingview-widget-container';
+
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+        script.text = JSON.stringify({
+          symbol: pair.symbol,
+          interval: chart.interval,
+          theme: 'light',
+          style: "1",
+          locale: 'ja',
+          hide_top_toolbar: true,
+          hide_legend: true,
+          allow_symbol_change: false,
+          hide_volume: true,
+          autosize: true
+        });
+
+        widget.appendChild(script);
+        container.appendChild(label);
+        container.appendChild(widget);
+        grid.appendChild(container);
+      });
+
+      tab.appendChild(grid);
+      tabs.appendChild(tab);
+    });
+
+    function setActiveTab(id) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      [...tabButtons.children].find(btn => btn.textContent === pairs.find(p => p.id === id).name).classList.add('active');
+    }
+  </script>
+</body>
+</html>
