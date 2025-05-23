@@ -7,80 +7,114 @@
 <style>
 * { box-sizing: border-box; }
 html, body {
-margin: 0;
-height: 100%;
-font-family: Arial, sans-serif;
-background-color: #f4f6f8;
-overflow: hidden;
+  margin: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background-color: #f4f6f8;
+  overflow: hidden;
 }
 header {
-background-color: #2e3b55;
-color: white;
-padding: 4px 6px;
-text-align: center;
+  background-color: #2e3b55;
+  color: white;
+  padding: 4px 6px;
+  text-align: center;
 }
 header h1 {
-font-size: 0.95em;
-margin: 0;
+  font-size: 0.95em;
+  margin: 0;
 }
 nav {
-display: flex;
-flex-wrap: wrap;
-justify-content: center;
-background-color: #fff;
-border-bottom: 1px solid #ccc;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  background-color: #fff;
+  border-bottom: 1px solid #ccc;
 }
 nav button {
-background: none;
-border: none;
-padding: 8px 12px;
-cursor: pointer;
-font-weight: bold;
-color: #4169e1;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #4169e1;
 }
 nav button.active {
-border-bottom: 2px solid #4169e1;
+  border-bottom: 2px solid #4169e1;
 }
+
 .tab-content {
-display: none;
-height: calc(100vh - 60px); /* header + nav = 約60px */
-padding: 4px;
+  display: none;
+  height: calc(100vh - 60px); /* header + nav = 約60px */
+  padding: 4px;
 }
+
 .tab-content.active {
-display: block;
+  display: block;
 }
+
 .chart-grid {
-display: grid;
-grid-template-columns: 2fr 3fr;
-grid-template-rows: 1fr 1.4fr;
-grid-template-areas:
-"daily hourly"
-"minute minute";
-height: 100%;
-gap: 4px;
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  grid-template-rows: 1fr 1.4fr;
+  grid-template-areas:
+    "daily hourly"
+    "minute minute";
+  height: 100%;
+  gap: 4px;
 }
+
 .chart-container {
-background-color: #fff;
-border-radius: 6px;
-box-shadow: 0 0 5px rgba(0,0,0,0.1);
-padding: 2px;
-width: 100%;
-height: 100%;
-display: flex;
-flex-direction: column;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  padding: 2px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.chart-label {
-font-size: 13px;
-font-weight: bold;
-text-align: center;
-margin-bottom: 2px;
-color: #4169e1;
-flex: 0 0 auto;
+
+/* 時間軸切替ボタンの親要素 高さを低く */
+.chart-controls {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+  padding: 1px 4px;  /* paddingを小さくして高さ抑制 */
+  justify-content: center;
+  border-bottom: 1px solid #ddd;
+  overflow-x: auto;
+  font-size: 0.8em;
 }
+
+/* ボタン高さを極力低く */
+.chart-controls button {
+  background: none;
+  border: 1px solid #4169e1;
+  border-radius: 4px;
+  padding: 2px 6px;  /* 縦のpaddingを減らす */
+  cursor: pointer;
+  font-size: 0.8em;
+  color: #4169e1;
+  white-space: nowrap;
+  user-select: none;
+  transition: background-color 0.2s, color 0.2s;
+  line-height: 1.1;
+}
+
+.chart-controls button.active {
+  background-color: #4169e1;
+  color: white;
+  font-weight: bold;
+  border-color: #4169e1;
+}
+
 .tradingview-widget-container {
-flex: 1 1 auto;
-min-height: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
+
 .daily { grid-area: daily; }
 .hourly { grid-area: hourly; }
 .minute { grid-area: minute; }
@@ -93,82 +127,130 @@ min-height: 0;
 
 <script>
 const pairs = [
-{ id: "USDJPY", name: "USD/JPY", symbol: "FX:USDJPY" },
-{ id: "EURJPY", name: "EUR/JPY", symbol: "FX:EURJPY" },
-{ id: "GBPJPY", name: "GBP/JPY", symbol: "FX:GBPJPY" },
-{ id: "EURUSD", name: "EUR/USD", symbol: "FX:EURUSD" },
-{ id: "AUDJPY", name: "AUD/JPY", symbol: "FX:AUDJPY" },
-{ id: "GBPUSD", name: "GBP/USD", symbol: "FX:GBPUSD" },
-{ id: "AUDUSD", name: "AUD/USD", symbol: "FX:AUDUSD" },
-{ id: "GOLD", name: "GOLD", symbol: "CAPITALCOM:GOLD" }
+  { id: "USDJPY", name: "USD/JPY", symbol: "FX:USDJPY" },
+  { id: "EURJPY", name: "EUR/JPY", symbol: "FX:EURJPY" },
+  { id: "GBPJPY", name: "GBP/JPY", symbol: "FX:GBPJPY" },
+  { id: "EURUSD", name: "EUR/USD", symbol: "FX:EURUSD" },
+  { id: "AUDJPY", name: "AUD/JPY", symbol: "FX:AUDJPY" },
+  { id: "GBPUSD", name: "GBP/USD", symbol: "FX:GBPUSD" },
+  { id: "AUDUSD", name: "AUD/USD", symbol: "FX:AUDUSD" },
+  { id: "GOLD", name: "GOLD", symbol: "CAPITALCOM:GOLD" }
 ];
+
+const intervals = {
+  daily: [
+    { label: '月足', value: 'M' },
+    { label: '週足', value: 'W' },
+    { label: '日足', value: 'D' }
+  ],
+  hourly: [
+    { label: '4時間足', value: '240' },
+    { label: '1時間足', value: '60' }
+  ],
+  minute: [
+    { label: '15分足', value: '15' },
+    { label: '5分足', value: '5' },
+    { label: '1分足', value: '1' }
+  ]
+};
 
 const tabButtons = document.getElementById('tab-buttons');
 const tabs = document.getElementById('tabs');
 
 pairs.forEach((pair, index) => {
-const btn = document.createElement('button');
-btn.textContent = pair.name;
-btn.onclick = () => setActiveTab(pair.id);
-if (index === 0) btn.classList.add('active');
-tabButtons.appendChild(btn);
+  // タブ切替ボタン作成
+  const btn = document.createElement('button');
+  btn.textContent = pair.name;
+  btn.onclick = () => setActiveTab(pair.id);
+  if (index === 0) btn.classList.add('active');
+  tabButtons.appendChild(btn);
 
-const tab = document.createElement('div');
-tab.className = 'tab-content' + (index === 0 ? ' active' : '');
-tab.id = pair.id;
+  // タブコンテンツ作成
+  const tab = document.createElement('div');
+  tab.className = 'tab-content' + (index === 0 ? ' active' : '');
+  tab.id = pair.id;
 
-const grid = document.createElement('div');
-grid.className = 'chart-grid';
+  // グリッドレイアウト
+  const grid = document.createElement('div');
+  grid.className = 'chart-grid';
 
-const charts = [
-{ label: '1日足', interval: 'D', area: 'daily' },
-{ label: '1時間足', interval: '60', area: 'hourly' },
-{ label: '1分足', interval: '1', area: 'minute' }
-];
+  // 日足チャート
+  const dailyContainer = createChartContainer(pair, 'daily', intervals.daily, intervals.daily[intervals.daily.length - 1]);
+  dailyContainer.classList.add('daily');
+  grid.appendChild(dailyContainer);
 
-charts.forEach(chart => {
-const container = document.createElement('div');
-container.className = `chart-container ${chart.area}`;
+  // 1時間足チャート
+  const hourlyContainer = createChartContainer(pair, 'hourly', intervals.hourly, intervals.hourly[intervals.hourly.length - 1]);
+  hourlyContainer.classList.add('hourly');
+  grid.appendChild(hourlyContainer);
 
-const label = document.createElement('div');
-label.className = 'chart-label';
-label.textContent = chart.label;
+  // 1分足チャート
+  const minuteContainer = createChartContainer(pair, 'minute', intervals.minute, intervals.minute[intervals.minute.length - 1]);
+  minuteContainer.classList.add('minute');
+  grid.appendChild(minuteContainer);
 
-const widget = document.createElement('div');
-widget.className = 'tradingview-widget-container';
-
-const script = document.createElement('script');
-script.type = 'text/javascript';
-script.async = true;
-script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-script.text = JSON.stringify({
-symbol: pair.symbol,
-interval: chart.interval,
-theme: 'light',
-style: "1",
-locale: 'ja',
-hide_top_toolbar: true,
-hide_legend: true,
-allow_symbol_change: false,
-hide_volume: true,
-autosize: true
+  tab.appendChild(grid);
+  tabs.appendChild(tab);
 });
 
-widget.appendChild(script);
-container.appendChild(label);
-container.appendChild(widget);
-grid.appendChild(container);
-});
+function createChartContainer(pair, key, timeframes, defaultTf) {
+  const container = document.createElement('div');
+  container.className = 'chart-container';
 
-tab.appendChild(grid);
-tabs.appendChild(tab);
-});
+  // 時間軸切替ボタン群
+  const controls = document.createElement('div');
+  controls.className = 'chart-controls';
+
+  // チャート表示領域
+  const widgetContainer = document.createElement('div');
+  widgetContainer.className = 'tradingview-widget-container';
+
+  function loadChart(tf) {
+    widgetContainer.innerHTML = '';
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.async = true;
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    script.text = JSON.stringify({
+      symbol: pair.symbol,
+      interval: tf.value,
+      theme: 'light',
+      style: "1",
+      locale: 'ja',
+      hide_top_toolbar: true,
+      hide_legend: true,
+      allow_symbol_change: false,
+      hide_volume: true,
+      autosize: true
+    });
+    widgetContainer.appendChild(script);
+  }
+
+  timeframes.forEach(tf => {
+    const tfBtn = document.createElement('button');
+    tfBtn.textContent = tf.label;
+    if (tf.value === defaultTf.value) tfBtn.classList.add('active');
+    tfBtn.onclick = () => {
+      [...controls.querySelectorAll('button')].forEach(b => b.classList.remove('active'));
+      tfBtn.classList.add('active');
+      loadChart(tf);
+    };
+    controls.appendChild(tfBtn);
+  });
+
+  // 初期チャートロード
+  loadChart(defaultTf);
+
+  container.appendChild(controls);
+  container.appendChild(widgetContainer);
+  return container;
+}
 
 function setActiveTab(id) {
-document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-document.getElementById(id).classList.add('active');
-[...tabButtons.children].find(btn => btn.textContent === pairs.find(p => p.id === id).name).classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  [...tabButtons.children].find(btn => btn.textContent === pairs.find(p => p.id === id).name).classList.add('active');
 }
 </script>
 </body>
