@@ -1,209 +1,175 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FXトレード塾：マルチタイムフレームチャート</title>
-  <style>
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      height: 100%;
-      font-family: Arial, sans-serif;
-      background-color: #f4f6f8;
-      overflow: hidden;
-    }
-    header {
-      background-color: #2e3b55;
-      color: white;
-      padding: 4px 6px;
-      text-align: center;
-    }
-    header h1 {
-      font-size: 0.95em;
-      margin: 0;
-    }
-    nav {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      background-color: #fff;
-      border-bottom: 1px solid #ccc;
-    }
-    nav button {
-      background: none;
-      border: none;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-weight: bold;
-      color: #4169e1;
-    }
-    nav button.active {
-      border-bottom: 2px solid #4169e1;
-    }
-    .tab-content {
-      display: none;
-      height: calc(100vh - 60px); /* header + nav = 約60px */
-      padding: 4px;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    .chart-grid {
-      display: grid;
-      grid-template-columns: 2fr 3fr;
-      grid-template-rows: 1fr 1.4fr;
-      grid-template-areas:
-        "daily hourly"
-        "minute minute";
-      height: 100%;
-      gap: 4px;
-    }
-    .chart-container {
-      background-color: #fff;
-      border-radius: 6px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-      padding: 2px;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-    .chart-label {
-      font-size: 13px;
-      font-weight: bold;
-      text-align: center;
-      margin-bottom: 2px;
-      color: #4169e1;
-      flex: 0 0 auto;
-    }
-    .tradingview-widget-container {
-      flex: 1 1 auto;
-      min-height: 0;
-    }
-    .daily { grid-area: daily; }
-    .hourly { grid-area: hourly; }
-    .minute { grid-area: minute; }
-
-    /* 通貨強弱タブ用のスタイル */
-    .currency-power-container {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.07);
-      margin: 32px auto;
-      max-width: 600px;
-      padding: 12px 0 8px 0;
-      text-align: center;
-    }
-    .currency-power-title {
-      font-size: 1.1em;
-      font-weight: bold;
-      color: #4169e1;
-      margin-bottom: 12px;
-      letter-spacing: 0.05em;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FXトレード塾：マルチタイムフレームチャート</title>
+<style>
+* { box-sizing: border-box; }
+html, body {
+margin: 0;
+height: 100%;
+font-family: Arial, sans-serif;
+background-color: #f4f6f8;
+overflow: hidden;
+}
+header {
+background-color: #2e3b55;
+color: white;
+padding: 4px 6px;
+text-align: center;
+}
+header h1 {
+font-size: 0.95em;
+margin: 0;
+}
+nav {
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+background-color: #fff;
+border-bottom: 1px solid #ccc;
+}
+nav button {
+background: none;
+border: none;
+padding: 8px 12px;
+cursor: pointer;
+font-weight: bold;
+color: #4169e1;
+}
+nav button.active {
+border-bottom: 2px solid #4169e1;
+}
+.tab-content {
+display: none;
+height: calc(100vh - 60px); /* header + nav = 約60px */
+padding: 4px;
+}
+.tab-content.active {
+display: block;
+}
+.chart-grid {
+display: grid;
+grid-template-columns: 2fr 3fr;
+grid-template-rows: 1fr 1.4fr;
+grid-template-areas:
+"daily hourly"
+"minute minute";
+height: 100%;
+gap: 4px;
+}
+.chart-container {
+background-color: #fff;
+border-radius: 6px;
+box-shadow: 0 0 5px rgba(0,0,0,0.1);
+padding: 2px;
+width: 100%;
+height: 100%;
+display: flex;
+flex-direction: column;
+}
+.chart-label {
+font-size: 13px;
+font-weight: bold;
+text-align: center;
+margin-bottom: 2px;
+color: #4169e1;
+flex: 0 0 auto;
+}
+.tradingview-widget-container {
+flex: 1 1 auto;
+min-height: 0;
+}
+.daily { grid-area: daily; }
+.hourly { grid-area: hourly; }
+.minute { grid-area: minute; }
+</style>
 </head>
 <body>
-  <header><h1>FXトレード塾：マルチタイムフレームチャート</h1></header>
-  <nav id="tab-buttons"></nav>
-  <div id="tabs"></div>
+<header><h1>FXトレード塾：マルチタイムフレームチャート</h1></header>
+<nav id="tab-buttons"></nav>
+<div id="tabs"></div>
 
-  <script>
-    const pairs = [
-      { id: "USDJPY", name: "USD/JPY", symbol: "FX:USDJPY" },
-      { id: "EURJPY", name: "EUR/JPY", symbol: "FX:EURJPY" },
-      { id: "GBPJPY", name: "GBP/JPY", symbol: "FX:GBPJPY" },
-      { id: "EURUSD", name: "EUR/USD", symbol: "FX:EURUSD" },
-      { id: "AUDJPY", name: "AUD/JPY", symbol: "FX:AUDJPY" },
-      { id: "GBPUSD", name: "GBP/USD", symbol: "FX:GBPUSD" },
-      { id: "AUDUSD", name: "AUD/USD", symbol: "FX:AUDUSD" },
-      { id: "GOLD", name: "GOLD", symbol: "CAPITALCOM:GOLD" },
-      { id: "CURRENCY_POWER", name: "通貨強弱" } // GOLDの後ろに移動
-    ];
+<script>
+const pairs = [
+{ id: "USDJPY", name: "USD/JPY", symbol: "FX:USDJPY" },
+{ id: "EURJPY", name: "EUR/JPY", symbol: "FX:EURJPY" },
+{ id: "GBPJPY", name: "GBP/JPY", symbol: "FX:GBPJPY" },
+{ id: "EURUSD", name: "EUR/USD", symbol: "FX:EURUSD" },
+{ id: "AUDJPY", name: "AUD/JPY", symbol: "FX:AUDJPY" },
+{ id: "GBPUSD", name: "GBP/USD", symbol: "FX:GBPUSD" },
+{ id: "AUDUSD", name: "AUD/USD", symbol: "FX:AUDUSD" },
+{ id: "GOLD", name: "GOLD", symbol: "CAPITALCOM:GOLD" }
+];
 
-    const tabButtons = document.getElementById('tab-buttons');
-    const tabs = document.getElementById('tabs');
+const tabButtons = document.getElementById('tab-buttons');
+const tabs = document.getElementById('tabs');
 
-    pairs.forEach((pair, index) => {
-      const btn = document.createElement('button');
-      btn.textContent = pair.name;
-      btn.onclick = () => setActiveTab(pair.id);
-      if (index === 0) btn.classList.add('active');
-      tabButtons.appendChild(btn);
+pairs.forEach((pair, index) => {
+const btn = document.createElement('button');
+btn.textContent = pair.name;
+btn.onclick = () => setActiveTab(pair.id);
+if (index === 0) btn.classList.add('active');
+tabButtons.appendChild(btn);
 
-      const tab = document.createElement('div');
-      tab.className = 'tab-content' + (index === 0 ? ' active' : '');
-      tab.id = pair.id;
+const tab = document.createElement('div');
+tab.className = 'tab-content' + (index === 0 ? ' active' : '');
+tab.id = pair.id;
 
-      if (pair.id === "CURRENCY_POWER") {
-        tab.innerHTML = `
-          <div class="currency-power-container">
-            <div class="currency-power-title"></div>
-            <div data-currency-power-balance></div>
-          </div>
-        `;
-      } else {
-        const grid = document.createElement('div');
-        grid.className = 'chart-grid';
+const grid = document.createElement('div');
+grid.className = 'chart-grid';
 
-        const charts = [
-          { label: '1日足', interval: 'D', area: 'daily' },
-          { label: '1時間足', interval: '60', area: 'hourly' },
-          { label: '1分足', interval: '1', area: 'minute' }
-        ];
+const charts = [
+{ label: '1日足', interval: 'D', area: 'daily' },
+{ label: '1時間足', interval: '60', area: 'hourly' },
+{ label: '1分足', interval: '1', area: 'minute' }
+];
 
-        charts.forEach(chart => {
-          const container = document.createElement('div');
-          container.className = `chart-container ${chart.area}`;
+charts.forEach(chart => {
+const container = document.createElement('div');
+container.className = `chart-container ${chart.area}`;
 
-          const label = document.createElement('div');
-          label.className = 'chart-label';
-          label.textContent = chart.label;
+const label = document.createElement('div');
+label.className = 'chart-label';
+label.textContent = chart.label;
 
-          const widget = document.createElement('div');
-          widget.className = 'tradingview-widget-container';
+const widget = document.createElement('div');
+widget.className = 'tradingview-widget-container';
 
-          const script = document.createElement('script');
-          script.type = 'text/javascript';
-          script.async = true;
-          script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-          script.text = JSON.stringify({
-            symbol: pair.symbol,
-            interval: chart.interval,
-            theme: 'light',
-            style: "1",
-            locale: 'ja',
-            hide_top_toolbar: true,
-            hide_legend: true,
-            allow_symbol_change: false,
-            hide_volume: true,
-            autosize: true
-          });
+const script = document.createElement('script');
+script.type = 'text/javascript';
+script.async = true;
+script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+script.text = JSON.stringify({
+symbol: pair.symbol,
+interval: chart.interval,
+theme: 'light',
+style: "1",
+locale: 'ja',
+hide_top_toolbar: true,
+hide_legend: true,
+allow_symbol_change: false,
+hide_volume: true,
+autosize: true
+});
 
-          widget.appendChild(script);
-          container.appendChild(label);
-          container.appendChild(widget);
-          grid.appendChild(container);
-        });
+widget.appendChild(script);
+container.appendChild(label);
+container.appendChild(widget);
+grid.appendChild(container);
+});
 
-        tab.appendChild(grid);
-      }
+tab.appendChild(grid);
+tabs.appendChild(tab);
+});
 
-      tabs.appendChild(tab);
-    });
-
-    function setActiveTab(id) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      [...tabButtons.children].find(btn => btn.textContent === pairs.find(p => p.id === id).name).classList.add('active');
-    }
-  </script>
-
-  <!-- OANDAウィジェットのスクリプトは一度だけ読み込む -->
-  <script src="https://widget.oanda.jp/currency-power-balance.js" async>
-    {"width":"auto","height":"auto"}
-  </script>
+function setActiveTab(id) {
+document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+[...tabButtons.children].find(btn => btn.textContent === pairs.find(p => p.id === id).name).classList.add('active');
+}
+</script>
 </body>
 </html>
