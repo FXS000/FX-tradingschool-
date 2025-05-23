@@ -117,6 +117,41 @@ nav button.active {
 .daily { grid-area: daily; }
 .hourly { grid-area: hourly; }
 .minute { grid-area: minute; }
+
+/* --- 売買分析タブ用スタイル --- */
+.trade-analysis-widgets {
+  display: grid;
+  grid-template-columns: repeat(4, 300px); /* 4列 */
+  grid-template-rows: repeat(2, 360px);   /* 2段 */
+  gap: 8px;
+  padding: 8px 4px;
+  height: 100%;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  overflow: auto;
+}
+.trade-analysis-widget {
+  width: 425px; 
+  height: 450px; 
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 0 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.trade-analysis-widget .tradingview-widget-container {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+.trade-analysis-widget .tradingview-widget-copyright {
+  font-size: 10px;
+  text-align: center;
+  padding-top: 2px;
+  color: #999;
+}
 </style>
 </head>
 <body>
@@ -133,7 +168,7 @@ const pairs = [
   { id: "AUDJPY", name: "AUD/JPY", symbol: "FX:AUDJPY" },
   { id: "GBPUSD", name: "GBP/USD", symbol: "FX:GBPUSD" },
   { id: "AUDUSD", name: "AUD/USD", symbol: "FX:AUDUSD" },
-  { id: "GOLD", name: "GOLD", symbol: "CAPITALCOM:GOLD" }
+  { id: "GOLD", name: "GOLD", symbol: "FOREXCOM:XAUUSD" }
 ];
 
 const intervals = {
@@ -156,34 +191,29 @@ const intervals = {
 const tabButtons = document.getElementById('tab-buttons');
 const tabs = document.getElementById('tabs');
 
+// ペアのタブを作成
 pairs.forEach((pair, index) => {
-  // タブ切替ボタン作成
   const btn = document.createElement('button');
   btn.textContent = pair.name;
   btn.onclick = () => setActiveTab(pair.id);
   if (index === 0) btn.classList.add('active');
   tabButtons.appendChild(btn);
 
-  // タブコンテンツ作成
   const tab = document.createElement('div');
   tab.className = 'tab-content' + (index === 0 ? ' active' : '');
   tab.id = pair.id;
 
-  // グリッドレイアウト
   const grid = document.createElement('div');
   grid.className = 'chart-grid';
 
-  // 日足チャート
   const dailyContainer = createChartContainer(pair, 'daily', intervals.daily, intervals.daily[intervals.daily.length - 1]);
   dailyContainer.classList.add('daily');
   grid.appendChild(dailyContainer);
 
-  // 1時間足チャート
   const hourlyContainer = createChartContainer(pair, 'hourly', intervals.hourly, intervals.hourly[intervals.hourly.length - 1]);
   hourlyContainer.classList.add('hourly');
   grid.appendChild(hourlyContainer);
 
-  // 1分足チャート
   const minuteContainer = createChartContainer(pair, 'minute', intervals.minute, intervals.minute[intervals.minute.length - 1]);
   minuteContainer.classList.add('minute');
   grid.appendChild(minuteContainer);
@@ -192,15 +222,78 @@ pairs.forEach((pair, index) => {
   tabs.appendChild(tab);
 });
 
+// 「売買分析」タブ追加
+const analysisBtn = document.createElement('button');
+analysisBtn.textContent = '売買分析';
+analysisBtn.onclick = () => setActiveTab('tradeAnalysis');
+tabButtons.appendChild(analysisBtn);
+
+const analysisTab = document.createElement('div');
+analysisTab.className = 'tab-content';
+analysisTab.id = 'tradeAnalysis';
+
+// 売買分析ウィジェット群コンテナ
+const analysisWidgetsContainer = document.createElement('div');
+analysisWidgetsContainer.className = 'trade-analysis-widgets';
+
+// 売買分析対象ペア（8個）
+const analysisPairs = [
+  "USDJPY", "EURJPY", "GBPJPY", "EURUSD", "AUDJPY", "GBPUSD", "AUDUSD", "GOLD"
+];
+
+// TradingViewウィジェット生成関数（テクニカル分析用）
+function createTechnicalAnalysisWidget(symbol) {
+  const widgetWrap = document.createElement('div');
+  widgetWrap.className = 'trade-analysis-widget';
+
+  const widgetContainer = document.createElement('div');
+  widgetContainer.className = 'tradingview-widget-container';
+
+  const copyrightDiv = document.createElement('div');
+  copyrightDiv.className = 'tradingview-widget-copyright';
+  copyrightDiv.innerHTML = `<a href="https://www.tradingview.com/symbols/${symbol.replace(':','-')}/technicals/" target="_blank" rel="noopener nofollow"><span class="blue-text">${symbol}</span></a>`;
+
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.async = true;
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';
+  script.text = JSON.stringify({
+    interval: "1h",
+    width: 300,
+    isTransparent: false,
+    height: 300,
+    symbol: symbol,
+    showIntervalTabs: true,
+    displayMode: "single",
+    locale: "en",
+    colorTheme: "light"
+  });
+
+  widgetContainer.appendChild(script);
+  widgetWrap.appendChild(widgetContainer);
+  //widgetWrap.appendChild(copyrightDiv);
+  return widgetWrap;
+}
+
+// ウィジェットを8個生成して追加
+analysisPairs.forEach(id => {
+  const p = pairs.find(p => p.id === id);
+  if (p) {
+    const widget = createTechnicalAnalysisWidget(p.symbol);
+    analysisWidgetsContainer.appendChild(widget);
+  }
+});
+
+analysisTab.appendChild(analysisWidgetsContainer);
+tabs.appendChild(analysisTab);
+
 function createChartContainer(pair, key, timeframes, defaultTf) {
   const container = document.createElement('div');
   container.className = 'chart-container';
 
-  // 時間軸切替ボタン群
   const controls = document.createElement('div');
   controls.className = 'chart-controls';
 
-  // チャート表示領域
   const widgetContainer = document.createElement('div');
   widgetContainer.className = 'tradingview-widget-container';
 
@@ -237,7 +330,6 @@ function createChartContainer(pair, key, timeframes, defaultTf) {
     controls.appendChild(tfBtn);
   });
 
-  // 初期チャートロード
   loadChart(defaultTf);
 
   container.appendChild(controls);
@@ -246,29 +338,27 @@ function createChartContainer(pair, key, timeframes, defaultTf) {
 }
 
 function adjustChartHeights() {
-  document.querySelectorAll('.tab-content.active .chart-container').forEach(container => {
-    const controls = container.querySelector('.chart-controls');
-    const widget = container.querySelector('.tradingview-widget-container');
-    if (!controls || !widget) return;
-
-    const containerHeight = container.clientHeight;
-    const controlsHeight = controls.offsetHeight;
-    const newHeight = containerHeight - controlsHeight - 6; // 6pxは余白調整
-    widget.style.height = newHeight > 0 ? newHeight + 'px' : '100px';
+  document.querySelectorAll('.chart-container').forEach(c => {
+    c.style.height = '100%';
   });
 }
 
 function setActiveTab(id) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  [...tabButtons.children].find(btn => btn.textContent === pairs.find(p => p.id === id).name).classList.add('active');
-
-  adjustChartHeights();
+  // タブボタン切り替え
+  [...tabButtons.children].forEach(btn => {
+    btn.classList.toggle('active', btn.textContent === (id === 'tradeAnalysis' ? '売買分析' : pairs.find(p => p.id === id)?.name));
+  });
+  // タブ表示切り替え
+  [...tabs.children].forEach(tab => {
+    tab.classList.toggle('active', tab.id === id);
+  });
 }
 
 window.addEventListener('resize', adjustChartHeights);
-window.addEventListener('load', adjustChartHeights);
+window.addEventListener('load', () => {
+  adjustChartHeights();
+  setActiveTab(pairs[0].id);
+});
 </script>
 </body>
 </html>
