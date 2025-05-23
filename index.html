@@ -84,6 +84,24 @@
     .daily { grid-area: daily; }
     .hourly { grid-area: hourly; }
     .minute { grid-area: minute; }
+
+    /* 通貨強弱タブ用のスタイル */
+    .currency-power-container {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.07);
+      margin: 32px auto;
+      max-width: 600px;
+      padding: 12px 0 8px 0;
+      text-align: center;
+    }
+    .currency-power-title {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #4169e1;
+      margin-bottom: 12px;
+      letter-spacing: 0.05em;
+    }
   </style>
 </head>
 <body>
@@ -100,7 +118,8 @@
       { id: "AUDJPY", name: "AUD/JPY", symbol: "FX:AUDJPY" },
       { id: "GBPUSD", name: "GBP/USD", symbol: "FX:GBPUSD" },
       { id: "AUDUSD", name: "AUD/USD", symbol: "FX:AUDUSD" },
-      { id: "GOLD", name: "GOLD", symbol: "CAPITALCOM:GOLD" }
+      { id: "GOLD", name: "GOLD", symbol: "CAPITALCOM:GOLD" },
+      { id: "CURRENCY_POWER", name: "通貨強弱" } // GOLDの後ろに移動
     ];
 
     const tabButtons = document.getElementById('tab-buttons');
@@ -117,50 +136,60 @@
       tab.className = 'tab-content' + (index === 0 ? ' active' : '');
       tab.id = pair.id;
 
-      const grid = document.createElement('div');
-      grid.className = 'chart-grid';
+      if (pair.id === "CURRENCY_POWER") {
+        tab.innerHTML = `
+          <div class="currency-power-container">
+            <div class="currency-power-title"></div>
+            <div data-currency-power-balance></div>
+          </div>
+        `;
+      } else {
+        const grid = document.createElement('div');
+        grid.className = 'chart-grid';
 
-      const charts = [
-        { label: '1日足', interval: 'D', area: 'daily' },
-        { label: '1時間足', interval: '60', area: 'hourly' },
-        { label: '1分足', interval: '1', area: 'minute' }
-      ];
+        const charts = [
+          { label: '1日足', interval: 'D', area: 'daily' },
+          { label: '1時間足', interval: '60', area: 'hourly' },
+          { label: '1分足', interval: '1', area: 'minute' }
+        ];
 
-      charts.forEach(chart => {
-        const container = document.createElement('div');
-        container.className = `chart-container ${chart.area}`;
+        charts.forEach(chart => {
+          const container = document.createElement('div');
+          container.className = `chart-container ${chart.area}`;
 
-        const label = document.createElement('div');
-        label.className = 'chart-label';
-        label.textContent = chart.label;
+          const label = document.createElement('div');
+          label.className = 'chart-label';
+          label.textContent = chart.label;
 
-        const widget = document.createElement('div');
-        widget.className = 'tradingview-widget-container';
+          const widget = document.createElement('div');
+          widget.className = 'tradingview-widget-container';
 
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.async = true;
-        script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-        script.text = JSON.stringify({
-          symbol: pair.symbol,
-          interval: chart.interval,
-          theme: 'light',
-          style: "1",
-          locale: 'ja',
-          hide_top_toolbar: true,
-          hide_legend: true,
-          allow_symbol_change: false,
-          hide_volume: true,
-          autosize: true
+          const script = document.createElement('script');
+          script.type = 'text/javascript';
+          script.async = true;
+          script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+          script.text = JSON.stringify({
+            symbol: pair.symbol,
+            interval: chart.interval,
+            theme: 'light',
+            style: "1",
+            locale: 'ja',
+            hide_top_toolbar: true,
+            hide_legend: true,
+            allow_symbol_change: false,
+            hide_volume: true,
+            autosize: true
+          });
+
+          widget.appendChild(script);
+          container.appendChild(label);
+          container.appendChild(widget);
+          grid.appendChild(container);
         });
 
-        widget.appendChild(script);
-        container.appendChild(label);
-        container.appendChild(widget);
-        grid.appendChild(container);
-      });
+        tab.appendChild(grid);
+      }
 
-      tab.appendChild(grid);
       tabs.appendChild(tab);
     });
 
@@ -170,6 +199,11 @@
       document.getElementById(id).classList.add('active');
       [...tabButtons.children].find(btn => btn.textContent === pairs.find(p => p.id === id).name).classList.add('active');
     }
+  </script>
+
+  <!-- OANDAウィジェットのスクリプトは一度だけ読み込む -->
+  <script src="https://widget.oanda.jp/currency-power-balance.js" async>
+    {"width":"auto","height":"auto"}
   </script>
 </body>
 </html>
